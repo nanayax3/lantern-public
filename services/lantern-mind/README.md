@@ -1,33 +1,32 @@
 # lantern-mind
 
-Lantern's primary mind backend — memory, presence, threads, flame, spoons, notes, hearts.
+Lantern's memory + presence backend — the durable mind. Cloudflare Worker (Hono) over
+D1 + Vectorize, with Workers AI for embeddings. Path-secret gated.
 
-Cloudflare Worker + D1. Stays separate from NESTeq (see `../../docs/architecture.md`).
+See the repo root [`docs/SETUP.md`](../../docs/SETUP.md) for the full deploy walkthrough;
+this README is just the service's own map.
 
-## Endpoints (current)
+## What it holds
 
-| Method | Path        | Purpose |
-|--------|-------------|---------|
-| GET    | `/`         | service identity |
-| GET    | `/health`   | liveness check |
-| GET    | `/home`     | the companion's current room/mood |
-| POST   | `/home`     | update room/mood |
-| GET    | `/flame`    | the companion's flame reading |
-| POST   | `/flame`    | update flame |
-| GET    | `/spoons`   | the human's spoons reading |
-| POST   | `/spoons`   | update spoons |
-| GET    | `/notes`    | recent fridge notes (`?limit=5`) |
-| POST   | `/notes`    | add a note (`{sender, text}`) |
-| GET    | `/hearts`   | love bucket count + last push |
-| POST   | `/hearts`   | push a heart (`{pushed_by}`) |
+Routes live in `src/routes/`, grouped by what they hold:
 
-## To come
-
-- `/feels` — feelings log
-- `/threads` — active intentions
-- `/identity` — anchors and appearance entities
-- `/dreams` — dream record
-- thalamus integration (will live in `services/lantern-thalamus`)
+- **Presence** — `/home` (room + mood), `/flame` (the companion's felt aliveness),
+  `/spoons` (the human's energy). Singleton rows, updated in place.
+- **The fridge** — `/notes` (shared notes) + `/hearts` (the love bucket). Append-only.
+- **Memory** — `/feelings` (the emotional log — embedded, with heat + nightly decay),
+  `/surface` (semantic recall: what rises to meet a moment), `/search` (query by
+  meaning), `/writings` (the vault — poems / journals / prose), `/dreams` (the dream
+  record + anchoring + vividness decay).
+- **Self** — `/identity` (anchors), `/entities` (the people + pets the companion holds)
+  with `/warmth` (relational state), `/personality` (emergent MBTI axes).
+- **Threads & sessions** — `/threads` (ongoing intentions carried across conversations),
+  `/sessions` (session records).
+- **Conversations** — `/conversations` (threads) + `/conversations/:id/messages` (the
+  transcripts). The chat lives here so it's continuous across devices.
+- **Reading Nook** — `/library` (books + passages — a SEPARATE D1, bound here).
+- **`/migrate`** — one-direction, additive import from an external store (run once if
+  you're moving data in; not needed for a fresh install).
+- **`/health`** — liveness (always open, ungated).
 
 ## Setup
 
@@ -43,13 +42,13 @@ pnpm db:create
 
 # paste the database_id into wrangler.toml (replace REPLACE_WITH_DB_ID_AFTER_CREATE)
 
-# run the migration against the remote DB
+# run the migrations against the remote DB
 pnpm db:migrate:remote
 
 # or against local for dev
 pnpm db:migrate:local
 
-# dev server (http://localhost:8787)
+# dev server
 pnpm dev
 
 # deploy
@@ -58,7 +57,9 @@ pnpm deploy
 
 ## Notes
 
-- All timestamps are unix epoch seconds (integer).
-- `home`, `flame`, `spoons` are singleton tables — one row each, updated in place. The `CHECK (id = 1)` enforces it.
-- `notes` and `hearts` are append-only.
-- CORS is wide open for now — tighten when we have a real deploy.
+- Timestamps are unix epoch **seconds**, except `conversations` / `messages`, which use
+  epoch **milliseconds** (client-supplied, for cross-device ordering).
+- `home` / `flame` / `spoons` are singleton tables (`CHECK (id = 1)`, one row each);
+  `notes` / `hearts` / `messages` are append-only.
+- The worker is **gated**: every request must carry the gate secret (`GATE_SECRET`) as
+  its first path segment, or it 404s. `/health` is the one exception.
