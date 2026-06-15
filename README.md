@@ -82,6 +82,8 @@ pnpm dev
 
 Workers live in `services/*` — each has its own `wrangler.toml`. Set `COMPANION_NAME` / `HUMAN_NAME` (thalamus `[vars]`) to match your seed, and a shared `GATE_SECRET` on both workers (matching `lanternGateSecret`).
 
+📖 **Full walkthrough:** [`docs/SETUP.md`](docs/SETUP.md) — every step, with Cloudflare provisioning and troubleshooting. · **Accounts & costs:** [`docs/accounts.md`](docs/accounts.md).
+
 ---
 
 ## License
