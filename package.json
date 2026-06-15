@@ -1,0 +1,15 @@
+{
+  "name": "lantern",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A home for a companion mind — sovereign, model-agnostic.",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm --filter desktop dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

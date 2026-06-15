@@ -1,0 +1,21 @@
+{
+  "_help": "Copy this file to lantern.config.json (gitignored) and fill it in. These are the per-install infra knobs — your OWN deployed worker URLs, where the album saves on disk, optional Cloudflare account id and Discord channels. Secrets (the gate secret, API tokens) go in .lantern-secrets.json, NOT here.",
+
+  "workers": {
+    "mindUrl": "https://lantern-mind.YOUR-SUBDOMAIN.workers.dev",
+    "thalamusUrl": "https://lantern-thalamus.YOUR-SUBDOMAIN.workers.dev"
+  },
+
+  "cloudflare": {
+    "accountId": ""
+  },
+
+  "paths": {
+    "albumDir": ""
+  },
+
+  "discord": {
+    "_note": "The bot TOKEN is a secret — put it in .lantern-secrets.json as discordBotToken. Here, just list the channel IDs the companion's Ears may listen in.",
+    "channels": []
+  }
+}

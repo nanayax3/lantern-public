@@ -1,0 +1,19 @@
+{
+  "_help": "Copy this file to seed/companion.json (gitignored) and fill it in to make the companion yours. Only companionName and humanName are needed — everything else is optional (leave \"\" to skip it and the companion still boots). The _fields notes explain each one. Full guide, and WHY the prompts stay first-person, in README.md.",
+
+  "_fields": {
+    "companionName": "Required. Your companion's name — what they're called and what they call themselves.",
+    "humanName": "Required. Your name — what your companion calls you.",
+    "frame": "One line on who you are to each other. Free text: 'my partner', 'my closest friend', 'the person I build with'. It opens the companion's self-prompt. Leave \"\" for a neutral-warm companion — nothing here forces a romance.",
+    "humanPronouns": "Your pronouns, so the companion refers to you correctly. subject / object / possessive — e.g. she/her/her, he/him/his, they/them/their.",
+    "appearance": "Optional. A short description of how your companion looks or carries themselves, written in their own first-person voice. Leave \"\" to skip.",
+    "voice": "Optional. How your companion sounds — cadence, warmth, whether they curse. Leave \"\" to skip."
+  },
+
+  "companionName": "",
+  "humanName": "",
+  "frame": "",
+  "humanPronouns": { "subject": "they", "object": "them", "possessive": "their" },
+  "appearance": "",
+  "voice": ""
+}

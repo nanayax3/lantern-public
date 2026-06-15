@@ -1,0 +1,35 @@
+name = "lantern-thalamus"
+main = "src/index.ts"
+compatibility_date = "2026-05-13"
+compatibility_flags = ["nodejs_compat"]
+
+# Workers AI — the thalamus's small fast model: Qwen 3 30B-a3b.
+# Query extraction + (later) judgment. Fractions of a cent per call.
+[ai]
+binding = "AI"
+
+# Service binding — the reliable worker-to-worker wire to lantern-mind in
+# production. Same-account workers can't talk over public URLs; this is a direct
+# internal channel. mind.ts prefers this, falling back to MIND_URL in local dev.
+[[services]]
+binding = "MIND"
+service = "lantern-mind"
+
+# lantern-mind's public URL. Used in local dev (and as fallback if no binding).
+# Local dev override: wrangler dev --var MIND_URL:http://127.0.0.1:8799
+# COMPANION_NAME / HUMAN_NAME are interpolated into the thalamus's first-person
+# prompts — set them to match your seed (the companion's name and the human's name).
+[vars]
+MIND_URL = "https://lantern-mind.example.workers.dev"
+COMPANION_NAME = "Companion"
+HUMAN_NAME = "You"
+
+# Voice 3 — the dreaming runs on a cron. Fires every 4h; the handler gates on
+# a ~20h gap (maybeDream), so the real cadence is "~once every 20h, during
+# whatever quiet stretch the threshold lands in." Tune the cron freq vs the gap
+# in voice3.ts once it's live and we see the rhythm.
+[triggers]
+crons = ["0 */4 * * *"]
+
+[observability]
+enabled = true

@@ -1,0 +1,23 @@
+{
+  "name": "lantern-mind",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Lantern's primary mind backend — memory, presence, threads, flame, spoons, notes, hearts",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create lantern-mind-db",
+    "db:migrate:local": "wrangler d1 migrations apply lantern-mind-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply lantern-mind-db --remote",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^3.78.0"
+  }
+}

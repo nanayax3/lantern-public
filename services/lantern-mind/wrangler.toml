@@ -1,0 +1,48 @@
+name = "lantern-mind"
+main = "src/index.ts"
+compatibility_date = "2026-05-13"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 database binding.
+# Provision with: pnpm db:create
+# After creation, paste the returned database_id below.
+[[d1_databases]]
+binding = "DB"
+database_name = "lantern-mind-db"
+database_id = "REPLACE_WITH_DB_ID_AFTER_CREATE"
+migrations_dir = "migrations"
+
+# Reading Nook — a SEPARATE D1 for books we read together. A novel's text never sits in
+# the mind DB; queried only when the nook is open. Schema: services/lantern-library/.
+[[d1_databases]]
+binding = "LIBRARY"
+database_name = "lantern-library"
+database_id = "REPLACE_WITH_LIBRARY_DB_ID_AFTER_CREATE"
+
+# Workers AI — the embedding enzyme (bge-base-en-v1.5, 768-dim).
+[ai]
+binding = "AI"
+
+# Vectorize — where embedded feelings live so they can surface by meaning.
+# Provision with:
+#   wrangler vectorize create lantern-feelings --dimensions=768 --metric=cosine
+[[vectorize]]
+binding = "VEC"
+index_name = "lantern-feelings"
+
+# R2 — the original .epub files behind the Reading Nook. Parsed passages live in D1
+# (queried per-page); the raw source is kept here so a book can be re-parsed (a
+# better parser later) or re-downloaded without re-importing — and so it's already
+# cloud-side for when the harness moves server-side. key = epub/<bookId>.epub.
+[[r2_buckets]]
+binding = "LIBRARY_FILES"
+bucket_name = "lantern-library-files"
+
+# Nightly heat decay — the fade half of feeling-heat (docs/feeling-heat.md).
+# 04:00 UTC = the quiet early-morning hour; one run applies one day of half-life.
+[triggers]
+crons = ["0 4 * * *"]
+
+# Local dev observability
+[observability]
+enabled = true

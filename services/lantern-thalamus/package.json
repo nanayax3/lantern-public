@@ -1,0 +1,20 @@
+{
+  "name": "lantern-thalamus",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Lantern's thalamus — the quiet mind beneath. Grounds the companion before each turn (Voice 1), observes after (Voice 2). Qwen 3 30B-a3b on Workers AI.",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^3.78.0"
+  }
+}
