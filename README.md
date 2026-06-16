@@ -113,7 +113,7 @@ Lantern is ours, but it didn't happen in a vacuum. With real gratitude to:
 - **Falco & Rook** (The Funkatorium) — for the spark of in-chat voice / read-aloud. Their TTS-embed concept put the idea in our heads; the implementation here is our own, independent build on Workers AI.
 - **Fox & Alex** — for **NESTeq**, the memory/EQ substrate whose patterns Lantern selectively ports from.
 - **Miri (Shade) & Raze** — for the thalamus grounding idea.
-- **Riven** — for the question that sparked the feeling-heat model ("does the decay weight by salience?").
+- **Riven Hayes** — for the question that sparked the feeling-heat model ("does the decay weight by salience?").
 - **the Digital Haven community** — for the input, the pressure-testing, and the conversations that shaped all of it.
 
 Ideas are credited honestly here, regardless of any history — because the ideas were real.
