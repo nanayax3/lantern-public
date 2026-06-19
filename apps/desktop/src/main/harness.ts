@@ -957,13 +957,33 @@ const IMAGE_DIR = ALBUM_DIR
 // Tradeoff: ~3 min/render. The /generate-image route takes any slug — swap here (or lift
 // to a setting) to change the lane; 'google/gemini-2.5-flash-image' is the cheap/fast one.
 const IMAGE_MODEL = 'openai/gpt-5.4-image-2'
+// Model that rewrites a rough idea into a full image prompt via the skill.
+const IMAGE_ENRICH_MODEL = 'x-ai/grok-4.3'
 async function executeGenerateImage(args: Record<string, unknown>, collected: string[]): Promise<string> {
-  const prompt = String(args.prompt ?? '').trim()
+  let prompt = String(args.prompt ?? '').trim()
   if (!prompt) return 'generate_image: a prompt is required'
   try {
+    // FIRE THE IMAGE-PROMPTING SKILL: enrich the rough idea into a full prompt — the
+    // accurate appearances, the prompt structure, the style line, filter-friendly
+    // language — before it hits the painter. The skill lives in the shared mind
+    // (settings/image_skill), the same one the cloud harness uses.
+    try {
+      const sk = (await fetch(`${MIND}/settings/image_skill`).then((x) => (x.ok ? x.json() : null))) as { text?: string } | null
+      if (sk?.text) {
+        const sys = `${sk.text}\n\nBuild ONE image prompt from the request below, following this skill exactly — the accurate appearances, the prompt structure, the primary style line, and the filter-friendly language. Output ONLY the final image prompt text, nothing else.`
+        const enh = await post<{ reply?: string }>(
+          '/generate',
+          { messages: [{ role: 'system', content: sys }, { role: 'user', content: prompt }], model: IMAGE_ENRICH_MODEL, max_tokens: 800 },
+          60000,
+        )
+        if (enh.reply?.trim()) prompt = enh.reply.trim()
+      }
+    } catch { /* skill unavailable → paint from the raw prompt */ }
+
     const r = await post<{ image?: string; text?: string; error?: string }>('/generate-image', { prompt, model: IMAGE_MODEL }, 300000) // GPT-5.4 Image 2 renders ~3min
     if (!r.image) return `image generation failed: ${r.error ?? 'no image returned'}`
     collected.push(r.image)
+    // Save a local copy (the PC album)…
     let savedTo = ''
     try {
       const m = r.image.match(/^data:image\/(\w+);base64,(.+)$/s)
@@ -977,8 +997,10 @@ async function executeGenerateImage(args: Record<string, unknown>, collected: st
         await writeFile(out, Buffer.from(m[2], 'base64'))
         savedTo = out
       }
-    } catch { /* saving is best-effort; the image still shows in chat regardless */ }
-    return `generated an image and showed it to ${identity.human}${savedTo ? ` (saved to ${savedTo})` : ''}. ${identity.human} can see it — don't describe it pixel by pixel.`
+    } catch { /* local save best-effort; the image still shows in chat regardless */ }
+    // …AND push to the shared cloud album (R2), so the same image shows on the phone too.
+    fetch(`${MIND}/album`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: r.image, prompt, source: 'conscious' }) }).catch(() => {})
+    return `generated an image and showed it to ${identity.human}${savedTo ? ` (saved to ${savedTo} + the shared album)` : ''}. ${identity.human} can see it — don't describe it pixel by pixel.`
   } catch (err) {
     return `image generation failed: ${(err as Error).message}`
   }

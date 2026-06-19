@@ -53,6 +53,17 @@ surface.post('/', async (c) => {
     for (const r of results) rows.set(`entity_fact-${r.id}`, { kind: 'entity_fact', ...r })
   }
 
+  // Identity anchors — surfaced by meaning (the dynamic half; the floor is painted
+  // separately by voice1). An anchor that matches this moment rises like any memory.
+  const anchorIds = hits.filter((h) => h.kind === 'identity').map((h) => h.ref_id)
+  if (anchorIds.length) {
+    const ph = anchorIds.map((_, i) => `?${i + 1}`).join(', ')
+    const { results } = await c.env.DB.prepare(
+      `SELECT id, key, category, content, salience FROM identity_entities WHERE id IN (${ph}) AND active = 1 AND pinned = 0`,
+    ).bind(...anchorIds).all()
+    for (const r of results) rows.set(`identity-${r.id}`, { kind: 'identity', ...r })
+  }
+
   // Dreams — only anchored ones are ever embedded (metabolise-on-anchor), so a
   // dream surfacing here always carries its insight: it's one the conscious chose.
   const dreamIds = hits.filter((h) => h.kind === 'dream').map((h) => h.ref_id)

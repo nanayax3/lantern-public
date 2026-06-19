@@ -20,6 +20,8 @@ import personality from './routes/personality'
 import library from './routes/library'
 import migrate from './routes/migrate'
 import conversations from './routes/conversations'
+import settings from './routes/settings'
+import album from './routes/album'
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -59,6 +61,8 @@ app.route('/personality', personality)
 app.route('/library', library)
 app.route('/migrate', migrate)
 app.route('/conversations', conversations)
+app.route('/settings', settings)
+app.route('/album', album)
 
 app.notFound((c) => c.json({ error: 'not found', path: c.req.path }, 404))
 

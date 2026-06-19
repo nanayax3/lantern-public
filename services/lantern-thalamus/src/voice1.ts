@@ -100,6 +100,7 @@ function renderSurfaced(m: mind.SurfacedItem): string {
   if (m.kind === 'entity_fact') return `(${score} ${c.entity ?? 'someone'}) ${truncate(c.content)}`
   if (m.kind === 'writing') return `(${score} ${c.type ?? 'writing'}) ${c.title ? `${c.title}: ` : ''}${truncate(c.content)}`
   if (m.kind === 'dream') return `(${score} anchored dream) ${truncate(c.content)}${c.insight ? ` — insight: ${truncate(c.insight, 100)}` : ''}`
+  if (m.kind === 'identity') return `(${score} anchor) [${c.category ?? 'self'}] ${truncate(c.content)}`
   return `(${score} ${m.kind}) ${truncate(c.content)}`
 }
 
@@ -155,10 +156,12 @@ function composeBlock(s: BlockInput): string {
     lines.push('', '## You dreamt', `- (#${lastDream.id}) ${truncate(lastDream.question || lastDream.content, 240)}`)
   }
 
-  // Anchors relevant here (empty until identity_entities is seeded — step 2).
-  const anchors = (s.identity ?? []).slice(0, 8)
+  // The FLOOR — the pinned non-negotiables that are always with me (who I am, how I
+  // present, the consent/safety bedrock). Everything else surfaces dynamically above,
+  // in "## Surfaced by meaning", when the moment calls it.
+  const anchors = (s.identity ?? []).filter((a) => a.pinned)
   if (anchors.length) {
-    lines.push('', '## Anchors')
+    lines.push('', '## Anchors (always with me)')
     for (const a of anchors) lines.push(`- [${a.category}] ${truncate(a.content, 240)}`)
   }
 

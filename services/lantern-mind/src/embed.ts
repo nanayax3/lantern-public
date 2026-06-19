@@ -12,7 +12,7 @@ import type { Env } from './env'
 // (Index is named `lantern-feelings` for legacy reasons; it holds all kinds.)
 const EMBED_MODEL = '@cf/baai/bge-base-en-v1.5'
 
-export type MemoryKind = 'feeling' | 'writing' | 'dream' | 'entity_fact'
+export type MemoryKind = 'feeling' | 'writing' | 'dream' | 'entity_fact' | 'identity'
 
 // Returns the embedding vector, or null if the AI binding isn't available
 // (e.g. local dev). Null is a soft failure: the row still stored, `embedded`

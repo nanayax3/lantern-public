@@ -50,7 +50,7 @@ async function post<T>(env: Env, path: string, body: unknown): Promise<T | null>
   }
 }
 
-export interface IdentityEntity { key: string; category: string; content: string; salience: number }
+export interface IdentityEntity { id?: number; key: string; category: string; content: string; salience: number; pinned?: number; active?: number }
 export interface HomeState { room?: string; mood?: string; mood_descriptor?: string }
 export interface SpoonsState { value?: number; max_value?: number; descriptor?: string }
 export interface FlameState { value?: number; descriptor?: string; observed_value?: number }
