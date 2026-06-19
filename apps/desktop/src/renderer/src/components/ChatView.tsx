@@ -2,6 +2,7 @@ import { Fragment, type ChangeEvent, type ClipboardEvent, type KeyboardEvent, us
 import { useConversations } from '../hooks/useConversations'
 import { MIND_URL } from '../lib/mind'
 import { MicButton } from './MicButton'
+import { VoiceNoteButton } from './VoiceNoteButton'
 
 interface SurfacedItem {
   score: number
@@ -54,6 +55,9 @@ interface Message {
   images?: string[]
   /** Data-URL voice clips the companion spoke in this reply. */
   audio?: string[]
+  /** Album ids of voice clips — the human's voice notes (and any cloud-saved clip).
+   *  Rendered by fetching the album, so they're lean in the store and show on every device. */
+  audioIds?: string[]
 }
 
 interface ConsciousSettings { apiUrl?: string; model?: string; apiKey?: string }
@@ -427,6 +431,59 @@ export function ChatView({ conversationId, onBack }: Props) {
     }
   }
 
+  // A voice note from the human — keep their actual voice (album) AND transcribe it so the
+  // companion reads what they said. Mirrors send(), but the message carries the album id of
+  // the clip; the transcript is the turn's text. No main-process change — the renderer
+  // persists it to the shared cloud store, so the clip shows on every device.
+  async function sendVoiceNote(base64: string, mime: string) {
+    if (pending) return
+    setPending(true)
+    try {
+      // keep the voice — store the clip in the album (served back for the player)
+      let audioId: string | undefined
+      try {
+        const up = await fetch(`${MIND_URL}/album`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: `data:${mime};base64,${base64}`, source: 'voice_note' }),
+        })
+        const uj = (await up.json()) as { id?: number }
+        if (uj.id != null) audioId = String(uj.id)
+      } catch {
+        /* clip best-effort — the transcript still goes through */
+      }
+      // hear them — transcribe to words for the companion
+      const said = (await window.lantern.transcribe(base64))?.trim() || ''
+      const text = said || '(a voice note — no words came through clearly)'
+      const history = messages.map((m) => ({
+        role: (m.from === 'human' ? 'user' : 'assistant') as 'user' | 'assistant',
+        content: m.text,
+      }))
+      append({ from: 'human', text, time: nowTime(), ts: Date.now(), ...(audioId ? { audioIds: [audioId] } : {}) })
+      touch(conversationId, 'human', said || '🎙 voice note')
+      const res = await window.lantern.respond(
+        text,
+        history,
+        readConscious(),
+        conversationId,
+        mode,
+        conv?.wearing,
+        conv?.title,
+        undefined,
+        conv?.temperature,
+      )
+      append({ from: 'companion', text: res.reply, time: nowTime(), ts: Date.now(), grounding: res.grounding, usage: res.usage, toolEvents: res.toolEvents, recall: res.recall, images: res.images, audio: res.audio })
+      touch(conversationId, 'companion', res.reply)
+      if (typeof res.temperature === 'number' && res.temperature !== (conv?.temperature ?? 0.85)) {
+        persistTemp(conversationId, res.temperature)
+      }
+    } catch (err) {
+      append({ from: 'companion', text: `[couldn't reach the mind: ${(err as Error).message}]`, time: nowTime(), ts: Date.now() }, false)
+    } finally {
+      setPending(false)
+    }
+  }
+
   function onKey(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -613,6 +670,9 @@ export function ChatView({ conversationId, onBack }: Props) {
             {msg.audio?.map((a, k) => (
               <VoiceClip key={k} src={a} />
             ))}
+            {msg.audioIds?.map((aid, k) => (
+              <VoiceClip key={`aid-${k}`} src={`${MIND_URL}/album/${aid}/image`} />
+            ))}
             {msg.from === 'companion' && msg.recall && msg.recall.length > 0 && (
               <details className="msg-recall">
                 <summary>🧠 woven memory · {msg.recall.length}</summary>
@@ -690,6 +750,7 @@ export function ChatView({ conversationId, onBack }: Props) {
           </button>
           <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={onPickImage} />
           <MicButton onText={(t) => setDraft((d) => (d ? `${d} ${t}` : t))} disabled={pending} />
+          <VoiceNoteButton onClip={sendVoiceNote} disabled={pending} />
           <textarea
             className="chat-input"
             placeholder={pending ? 'your companion is thinking…' : mode === 'coding' ? 'message your companion (coding mode — file/bash tools available)…' : 'message your companion…'}
